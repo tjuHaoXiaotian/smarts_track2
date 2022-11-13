@@ -14,6 +14,7 @@ RUN apt-get update --fix-missing && \
         libspatialindex-dev \
         python3.8 \
         python3.8-venv \
+	# git \
         xorg \
         zip && \
     apt-get autoremove -y && \
@@ -28,12 +29,21 @@ RUN python3.8 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install --upgrade pip wheel
 
+RUN apt-get update --assume-yes && \
+    apt-get upgrade --assume-yes && \
+    apt-get install --assume-yes git
+
 # Install requirements.txt .
 COPY ./submission/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# RUN pip install --no-cache-dir -r /tmp/requirements.txt
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --default-timeout=60 --no-cache-dir -r /tmp/requirements.txt
+
 
 # Copy only Track-2 files.
 COPY . /SMARTS/competition/track2
+
+RUN mkdir -p /SMARTS/competition/offline_dataset && \
+    mkdir -p /SMARTS/competition/output
 
 # [Do Not Modify]
 # Run entrypoint script.

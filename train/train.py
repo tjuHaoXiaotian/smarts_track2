@@ -1,6 +1,7 @@
 import argparse
-import yaml
+# import yaml
 import torch
+import yaml
 from pathlib import Path
 from typing import Any, Dict, Optional
 import sys
@@ -24,11 +25,12 @@ def train(input_path, output_path):
     n_steps = train_config["n_steps"]
     batch_size = train_config["batch_size"]
     learning_rate = train_config["learning_rate"]
+    device = train_config["device"]
 
     dataset = prepare_dataset(input_path)
     dataloader = prepare_data_loader(dataset, batch_size, True)
 
-    model = SocialVehiclePredictor().to("cuda")
+    model = SocialVehiclePredictor().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     model.train()
@@ -38,9 +40,9 @@ def train(input_path, output_path):
         for (space_wise_data, time_wise_data, valid_lengths) in dataloader:
             step += 1
 
-            space_wise_data = space_wise_data.cuda()
-            time_wise_data = time_wise_data.cuda()
-            valid_lengths = valid_lengths.cuda()
+            space_wise_data = space_wise_data.to(device)
+            time_wise_data = time_wise_data.to(device)
+            valid_lengths = valid_lengths.to(device)
 
             loss = model(space_wise_data, time_wise_data, valid_lengths)
 

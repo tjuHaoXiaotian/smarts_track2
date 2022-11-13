@@ -81,7 +81,6 @@ def run(
                 if dones["__all__"]:
                     print("step-{}: \033[1;41m {} \033[0m".format(raw_obs.steps_completed, raw_obs.events))
         agent_cnt += len(agent_ids)
-
     print(
         f'finish a scenario, instance_num:{instance_cnt} agent_num:{agent_cnt}, agent_complete:{agent_complete_cnt}, comp_rate:{agent_complete_cnt / agent_cnt}')
     return agent_cnt, agent_complete_cnt
@@ -90,7 +89,7 @@ def run(
 if __name__ == "__main__":
     ROAD_WAYPOINTS = False
     config = {
-        "eval_episodes": 1,
+        "eval_episodes": 10,
         "seed": 100,
         "scenarios": [
             "1_to_1lane_left_turn_c",
@@ -103,11 +102,11 @@ if __name__ == "__main__":
             "3lane_cruise_single_agent",
             # "3lane_cut_in",
             "3lane_overtake",
-            "3lane_merge_single_agent_0",
-            "3lane_merge_single_agent_1",
-            "3lane_merge_single_agent_2",
-            "3lane_cruise_single_agent_1",
-            "3lane_cruise_single_agent_2",
+            # "3lane_merge_single_agent_0",
+            # "3lane_merge_single_agent_1",
+            # "3lane_merge_single_agent_2",
+            # "3lane_cruise_single_agent_1",
+            # "3lane_cruise_single_agent_2",
             # "3lane_cruise_single_agent_n",
         ],
         "img_meters": 50,

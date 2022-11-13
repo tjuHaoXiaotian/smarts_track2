@@ -1,9 +1,10 @@
 import gym
 import torch
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import sys
+import yaml
 
 sys.path.insert(0, str(Path(__file__).parents[0]))
 sys.path.insert(0, str(Path(__file__).parents[1] / "train"))
@@ -11,6 +12,10 @@ sys.path.insert(0, str(Path(__file__).parents[1] / "train"))
 from planner import Planner
 from networks import SocialVehiclePredictor
 
+def load_config(path: Path) -> Optional[Dict[str, Any]]:
+    with open(path, "r") as file:
+        config = yaml.safe_load(file)
+    return config
 
 class BasePolicy:
     def act(self, obs: Dict[str, Any]):
@@ -46,11 +51,14 @@ def submitted_wrappers():
 class Policy(BasePolicy):
     def __init__(self):
         super().__init__()
+        train_config = load_config(Path(__file__).absolute().parents[0] / "config.yaml")
+        
+        device = train_config["device"]
         self.env_planners = dict()
-        self.sv_predictor = SocialVehiclePredictor().cuda()
+        self.sv_predictor = SocialVehiclePredictor(device=device).to(device)
 
         self.sv_predictor.load_state_dict(
-            torch.load(Path(__file__).parents[0] / "SVP.pt")
+            torch.load(Path(__file__).parents[0] / "SVP.pt", map_location=torch.device(device))
         )
 
     def act(self, obs: dict):
@@ -65,3 +73,23 @@ class Policy(BasePolicy):
 
             a[agent_id] = self.env_planners[agent_id].get_action(raw_obs)
         return a
+
+
+if __name__ == "__main__":
+    env = gym.make(
+        "smarts.env:multi-scenario-v0",
+        scenario="3lane_merge_multi_agent",
+        sumo_headless=True,
+        visdom=True
+    )
+    for wrapper in submitted_wrappers():
+        env = wrapper(env)
+    policy = Policy()
+    
+    obs = env.reset()
+    done = {"__all__": False}
+    
+    while not done["__all__"]:
+        act = policy.act(obs)
+        obs, reward, done, info = env.step(act)
+        

@@ -1,9 +1,8 @@
+# smarts==0.6.1rc0
+smarts[camera-obs] @ git+https://github.com/huawei-noah/SMARTS.git@comp-1
 numpy==1.23.1
 Pillow==9.2.0
 PyYAML==6.0
 torch==1.12.1
-smarts[camera-obs] @ git+https://github.com/huawei-noah/SMARTS.git@comp-1
-
-gym==0.21.0
-scipy==1.8.1
-matplotlib==3.5.2
+# smarts==0.6.0
+# smarts[camera-obs] @ git+https://github.com/huawei-noah/SMARTS.git@comp-1
