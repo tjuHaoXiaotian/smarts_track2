@@ -14,6 +14,8 @@ from agent.local_planner import LocalPlanner, transform_paths
 from agent.social_car_tracker import (SocialCarTracker, clip_yaw,
                                       convert_heading, inverse_heading)
 
+# import plot_util
+
 LOOKAHEAD_LENGTH = 30
 LOOKAHEAD_TIME = 2
 MIN_SPEED = 5  # m/s
@@ -27,6 +29,25 @@ print("LOOKAHEAD_LENGTH={}, LOOKAHEAD_TIME={}, FORCE_TO_GOAL_DISTANCE={}, MIN_SP
     MIN_SPEED,
     CIRCLE_RADII))
 
+def clip_target_pose(current_pos: list, target_pos: list, max_speed = 20):
+    clipped_target_pos = target_pos.copy()
+    
+    dist = np.linalg.norm([
+        target_pos[0] - current_pos[0],
+        target_pos[1] - current_pos[1],
+    ])
+    
+    clipped_dist = min(
+        dist, max_speed * 0.1
+    )
+    
+    clip_coeff = (clipped_dist / dist)
+    
+    clipped_target_pos[0] = current_pos[0] + clip_coeff * (target_pos[0] - current_pos[0])
+    clipped_target_pos[1] = current_pos[1] + clip_coeff * (target_pos[1] - current_pos[1])
+    
+    return clipped_target_pos
+    
 
 class Planner(object):
 
@@ -125,14 +146,47 @@ class Planner(object):
                 if best_index is not None:
                     break
 
+                # if self.debug and self.agent_name == "Agent_0":
+                #     _ego_data = batch_ego_trajectory[0]
+                #     _obstacle_data = batch_neighbor_trajectory
+                #     # for t in list(range(1, len(_ego_data), 20)) + [len(_ego_data) - 1]:
+                #     for t in [0]:
+                #         # for t in [1, len(_ego_data)-1]:
+                #         # start_t, end_t = t, min(t + 20, len(_ego_data) - 1)
+                #         start_t, end_t = 0, 1
+                #         _ego_data_t = _ego_data[start_t: end_t + 1][:, :2].reshape(-1, 2)
+                #         plot_util.plot_predicted_paths(
+                #             _predict_neighbor_positions([ego_info], 0),
+                #             self.local_planner._collision_checker._circle_radii[0],
+                #             self.local_planner._collision_checker.get_ego_car_positions(current_x, current_y, current_yaw),
+                #             _goal_state,
+                #             raw_obs.waypoint_paths,
+                #             paths,
+                #             _ego_data_t,
+                #             # self.social_car_tracker.predict_neighbor_positions(0),
+                #             _obstacle_data[0].reshape(-1, 2) if len(_obstacle_data) else None,
+                #             _obstacle_data[start_t: end_t + 1].reshape(-1, 2) if len(_obstacle_data) else None,
+                #             speed_config if best_index is not None else 0,
+                #             t
+                #         )
+
             if best_index is not None:
+                if speed_config > max_speed:
+                    speed_config = max_speed * 0.99
                 best_path = paths[best_index]
                 target_distance = speed_config * 0.1
                 target_x, target_y, target_yaw = get_target_at(best_path, ego_info.position[:2], target_distance)
                 # %%%%%%%%%%%%%%%%%%% clip the planned position by road boundary %%%%%%%%%%%%%%%%%%%
                 if has_multiple_candidate_paths:
-                    target_x, target_y = clip_the_target_position_by_road_boundary(target_x, target_y,
+                    target_x, target_y, target_yaw = clip_the_target_position_by_road_boundary(target_x, target_y, target_yaw,
                                                                                    raw_obs.waypoint_paths)
+                
+                [target_x, target_y] = clip_target_pose(
+                    [current_x, current_y],
+                    [ target_x,  target_y],
+                    speed_config
+                )
+                
                 return [target_x, target_y, target_yaw, 0.1]
             else:
                 target_x, target_y = ego_info.position[:2]
@@ -426,7 +480,7 @@ def get_lane_boundary(waypoint_paths):
     return left_lane, right_lane
 
 
-def clip_the_target_position_by_road_boundary(target_x, target_y, waypoint_paths):
+def clip_the_target_position_by_road_boundary(target_x, target_y, target_yaw, waypoint_paths):
     target_pos = np.array([target_x, target_y])
     left_lane, right_lane = get_lane_boundary(waypoint_paths)
     closest_point_idx_left = np.argmin(
@@ -442,13 +496,15 @@ def clip_the_target_position_by_road_boundary(target_x, target_y, waypoint_paths
     theta_left_0 = convert_heading(closest_point_left.heading)
     if theta_left_1 - theta_left_0 > 0:
         target_x, target_y = closest_point_left.pos[:2]
+        target_yaw = closest_point_left.heading
 
     vector_right_1 = target_pos - closest_point_right.pos[:2]
     theta_right_1 = clip_yaw(np.arctan2(vector_right_1[1], vector_right_1[0]))
     theta_right_0 = convert_heading(closest_point_right.heading)
     if theta_right_1 - theta_right_0 < 0:
         target_x, target_y = closest_point_right.pos[:2]
-    return target_x, target_y
+        target_yaw = closest_point_right.heading
+    return target_x, target_y, target_yaw
 
 
 def get_target_at(best_path, ego_position, target_distance):

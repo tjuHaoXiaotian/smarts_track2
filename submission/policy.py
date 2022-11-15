@@ -62,6 +62,7 @@ class Policy(BasePolicy):
             self.sv_predictor.load_state_dict(
                 torch.load(Path(__file__).parents[0] / "SVP.pt", map_location=torch.device(device))
             )
+            print("Load previously trained model.")
         except:
             pass
 
