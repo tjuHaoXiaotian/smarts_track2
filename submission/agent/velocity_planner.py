@@ -13,8 +13,10 @@ Aug 24, 2019
 # Additional Comments: Carlos Wang
 # Date: October 29, 2018
 
+from math import cos, pi, sin, sqrt
+
 import numpy as np
-from math import sin, cos, pi, sqrt
+
 
 class VelocityPlanner:
     def __init__(self, time_gap, a_max, slow_speed, stop_line_buffer):

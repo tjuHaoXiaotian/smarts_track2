@@ -11,10 +11,11 @@
 # This work is licensed under the terms of the MIT license.
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
+from math import cos, pi, sin, sqrt
+
 import numpy as np
-import scipy.optimize
 import scipy.integrate
-from math import sin, cos, pi, sqrt
+import scipy.optimize
 
 
 class PathOptimizer:

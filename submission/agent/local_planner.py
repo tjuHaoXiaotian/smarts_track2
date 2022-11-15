@@ -13,11 +13,12 @@ Aug 24, 2019
 # Additional Comments: Carlos Wang
 # Date: October 29, 2018
 
-import numpy as np
 import copy
-from . import path_optimizer
-from . import collision_checker
-from math import sin, cos, pi, sqrt
+from math import cos, pi, sin, sqrt
+
+import numpy as np
+
+from . import collision_checker, path_optimizer
 
 
 class LocalPlanner:

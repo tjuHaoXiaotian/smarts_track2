@@ -10,9 +10,9 @@
 import math
 
 import numpy as np
-
 from agent.local_planner import LocalPlanner, transform_paths
-from agent.social_car_tracker import clip_yaw, convert_heading, inverse_heading, SocialCarTracker
+from agent.social_car_tracker import (SocialCarTracker, clip_yaw,
+                                      convert_heading, inverse_heading)
 
 LOOKAHEAD_LENGTH = 30
 LOOKAHEAD_TIME = 2
@@ -66,7 +66,11 @@ class Planner(object):
         self.social_car_tracker.update(ego_info, raw_obs.neighborhood_vehicle_states)
 
         # Using pre-trained model to predict the future trajectories of the nearing social cars.
-        predicted_trajectories = self.social_car_predictor.predict_with_raw_obs(raw_obs)
+        try:
+            predicted_trajectories = self.social_car_predictor.predict_with_raw_obs(raw_obs)
+        except Exception as e:
+            print("There is an exception in 'social_car_predictor.predict_with_raw_obs(raw_obs)':", e)
+            predicted_trajectories = dict()
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  Select a path for ego car. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         current_x, current_y = ego_info.position[:2]

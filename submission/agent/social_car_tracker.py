@@ -7,10 +7,11 @@
 @Date    ：2022/11/11 16:27 
 '''
 import math
-import numpy as np
 from collections import deque
+from math import atan2, cos, sin
+
+import numpy as np
 from numpy.polynomial import Polynomial
-from math import sin, cos, atan2
 
 POLYNOMIAL_DEGREE = 1
 TRACK_TRAJ_LENGTH = 3
@@ -166,10 +167,13 @@ class SocialCarTracker():
         # [N, 2]
         positions = np.asarray([state.position[:2] for state in historical_trajectory])
 
-        if predicted_traj is not None:
-            # We currently only incorporate the first point predicted by the model.
-            predicted_first_point = predicted_traj[:1, :2]
-            positions = np.concatenate([predicted_first_point, positions], axis=0)
+        try:
+            if predicted_traj is not None and len(predicted_traj) > 0:
+                # We currently only incorporate the first point predicted by the model.
+                predicted_first_point = predicted_traj[:1, :2]
+                positions = np.concatenate([predicted_first_point, positions], axis=0)
+        except:
+            print("There is an exception in predicted_traj")
 
         yaw = convert_heading(neighbor_state_t.heading)
         speed = neighbor_state_t.speed

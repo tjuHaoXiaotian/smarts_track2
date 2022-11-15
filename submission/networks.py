@@ -1,10 +1,10 @@
-import torch
-import torch.nn as nn
-import numpy as np
+import sys
 from pathlib import Path
 from typing import List, Optional
 
-import sys
+import numpy as np
+import torch
+import torch.nn as nn
 
 sys.path.insert(0, str(Path(__file__).parents[0]))
 

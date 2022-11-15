@@ -1,13 +1,11 @@
 
-import re
-import numpy as np
 import os
 import pickle
-
+import re
 from pathlib import Path
 
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
+import numpy as np
+from torch.utils.data import DataLoader, Dataset
 
 
 def prepare_space_wise_info(np_obs, i):
@@ -173,4 +171,5 @@ def prepare_dataset(input_path):
     return SocialVehiclePredictorDataset(space_wise_data, time_wise_data, valid_length_data)
     
 def prepare_data_loader(dataset, batch_size, shuffle=True):
+    if len(dataset) == 0: return None
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
