@@ -35,7 +35,7 @@ def prepare_time_wise_info(np_obs, i, t, raw_dataset, id_list, predict_horizon):
     one_step_time_wise_info[0, 2:] = np_obs[i, 2:]
     valid_length = 0
     for h in range(1, predict_horizon):
-        future_neighborhood_vehicle_states = raw_dataset[(t+h)/10].neighborhood_vehicle_states
+        future_neighborhood_vehicle_states = raw_dataset[int(10*t+h)/10].neighborhood_vehicle_states
         future_social_vehicle_ids = [social_vehicle.id for social_vehicle in future_neighborhood_vehicle_states]
         if id_list[i] in future_social_vehicle_ids:
             id_index = future_social_vehicle_ids.index(id_list[i])
@@ -61,7 +61,8 @@ def prepare_predictor_dataset_for_one_file(raw_dataset, predict_horizon: int = 1
     '''
     raw_dataset_len = len(raw_dataset)
     last_index = raw_dataset_len - predict_horizon
-    assert last_index >= 0
+    if not last_index > 0:
+        return None, None, None
     
     social_vehicle_trajectories = []
     social_vehicle_ids = []
@@ -70,9 +71,11 @@ def prepare_predictor_dataset_for_one_file(raw_dataset, predict_horizon: int = 1
     time_wise_info = []  # (K*T,   H, D)
     valid_length = []
     
-    for t in [(1 + t) for t in range(last_index + 1)]:
-        ego_vehicle_state = raw_dataset[t/10].ego_vehicle_state
-        neighborhood_vehicle_states = raw_dataset[t/10].neighborhood_vehicle_states
+    for cnt, t in enumerate(raw_dataset.keys()):
+        if cnt >= last_index + 1: break
+
+        ego_vehicle_state = raw_dataset[t].ego_vehicle_state
+        neighborhood_vehicle_states = raw_dataset[t].neighborhood_vehicle_states
         ego_pos = ego_vehicle_state.position[:2]
         
         np_obs = []
@@ -141,7 +144,9 @@ def prepare_dataset(input_path):
         for filename in os.listdir(scenario_path):
             if filename.endswith(".pkl"):
                 match = re.search("(.*).pkl", filename)
-                assert match is not None
+                if match is None: 
+                    print("No matching pickle file found!")
+                    continue
                 vehicle_id = match.group(1)
                 if vehicle_id not in vehicle_ids:
                     vehicle_ids.append(vehicle_id)
@@ -154,6 +159,9 @@ def prepare_dataset(input_path):
             
             space_wise_info, time_wise_info, valid_length = \
                 prepare_predictor_dataset_for_one_file(vehicle_data, 15)
+                
+            if space_wise_info is None: continue
+            
             space_wise_data.append(space_wise_info)
             time_wise_data.append(time_wise_info)
             valid_length_data.append(valid_length)
